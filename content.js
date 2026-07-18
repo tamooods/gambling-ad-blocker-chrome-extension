@@ -1,45 +1,83 @@
-/* Gambling Ad Blocker - content.js
- * สแกนหน้าเว็บหา element ที่เข้าข่ายเป็นโฆษณาเว็บพนันออนไลน์ แล้วซ่อนทิ้ง
- */
-
 (function () {
   "use strict";
-
-  // ---------- คำ/รูปแบบที่ใช้ตรวจจับ ----------
-  // ครอบคลุมทั้งไทย/อังกฤษ คำที่เว็บพนันออนไลน์แถวเอเชียตะวันออกเฉียงใต้ใช้บ่อย
   const KEYWORDS = [
-    // ไทย - คำทั่วไปเกี่ยวกับพนัน
-    "เว็บพนัน", "พนันออนไลน์", "แทงบอล", "แทงบอลออนไลน์", "บาคาร่า",
-    "บาคาร่าออนไลน์", "สล็อตออนไลน์", "สล็อตแตกง่าย", "คาสิโนออนไลน์",
-    "คาสิโนสด", "ฝากถอนไม่มีขั้นต่ำ", "สมัครรับเครดิตฟรี", "เครดิตฟรี",
-    "แจกเครดิตฟรี", "หวยออนไลน์", "หวยหุ้น", "ปั่นสล็อต", "เกมยิงปลา",
-    "เว็บตรงไม่ผ่านเอเย่นต์", "เว็บสายตรง", "แตกหนัก", "แตกง่าย",
-    "รวยทางลัด", "ทุนน้อยก็รวยได้", "สมัครเล่นฟรี", "โบนัส100%",
-    // แบรนด์/คำที่มักพบใน banner พนัน (ตัวอย่างทั่วไป ไม่เจาะจงเว็บใดเว็บหนึ่ง)
-    "ufabet", "ufagoal", "ufa", "sbobet", "pgslot", "pg slot", "joker123",
-    "joker slot", "sagame", "dg casino", "ambbet", "betflix", "slotxo",
-    "gclub", "royal online", "หวยยี่กี", "เว็บพนันบอล",
-    // อังกฤษทั่วไป
-    "online casino", "sports betting", "slot game", "free credit bonus",
-    "bet now", "register to win"
+    "เว็บพนัน",
+    "พนันออนไลน์",
+    "แทงบอล",
+    "แทงบอลออนไลน์",
+    "บาคาร่า",
+    "บาคาร่าออนไลน์",
+    "สล็อตออนไลน์",
+    "สล็อตแตกง่าย",
+    "คาสิโนออนไลน์",
+    "คาสิโนสด",
+    "ฝากถอนไม่มีขั้นต่ำ",
+    "สมัครรับเครดิตฟรี",
+    "เครดิตฟรี",
+    "แจกเครดิตฟรี",
+    "หวยออนไลน์",
+    "หวยหุ้น",
+    "ปั่นสล็อต",
+    "เกมยิงปลา",
+    "เว็บตรงไม่ผ่านเอเย่นต์",
+    "เว็บสายตรง",
+    "แตกหนัก",
+    "แตกง่าย",
+    "รวยทางลัด",
+    "ทุนน้อยก็รวยได้",
+    "สมัครเล่นฟรี",
+    "โบนัส100%",
+    "ufabet",
+    "ufagoal",
+    "ufa",
+    "sbobet",
+    "pgslot",
+    "pg slot",
+    "joker123",
+    "joker slot",
+    "sagame",
+    "dg casino",
+    "ambbet",
+    "betflix",
+    "slotxo",
+    "gclub",
+    "royal online",
+    "หวยยี่กี",
+    "เว็บพนันบอล",
+    "online casino",
+    "sports betting",
+    "slot game",
+    "free credit bonus",
+    "bet now",
+    "register to win",
+    "lotto",
+    "pgjoker",
+    "mammoth",
+    "crypto88",
+    "texas24",
+    "teenoi69",
+    "macau69",
+    "789bet",
+    "789lady",
+    "bng55",
+    "nato",
+    "baccarat",
+    "bacara",
+    "sexygame",
   ];
 
-  // ทำ regex จาก keyword (case-insensitive, ตัด whitespace)
   const KEYWORD_REGEX = new RegExp(
     KEYWORDS.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
-    "i"
+    "i",
   );
 
   let enabled = true;
   let blockedCount = 0;
 
-  // ---------- helper ----------
   function textMatches(str) {
     return !!str && KEYWORD_REGEX.test(str);
   }
 
-  // เก็บ element ที่ "น่าจะเป็นกล่องโฆษณา" ทั้งกล่อง ไม่ใช่แค่ตัวรูป/ลิงก์เฉย ๆ
-  // เดินขึ้นไปหา parent ที่ดูเป็น container ของ ad (เช่น <a><img></a> หรือ div ครอบ banner)
   function findAdContainer(el) {
     let node = el;
     let depth = 0;
@@ -48,7 +86,6 @@
       if (node.tagName === "A" || node.tagName === "IFRAME") {
         candidate = node;
       }
-      // ถ้า parent มีขนาด/รูปแบบเหมือนกล่อง banner เดี่ยว ๆ (ไม่ใช่ body/main wrapper ใหญ่)
       const parent = node.parentElement;
       if (!parent) break;
       node = parent;
@@ -69,7 +106,7 @@
     const imgs = root.querySelectorAll("img:not([data-gab-checked])");
     imgs.forEach((img) => {
       img.setAttribute("data-gab-checked", "1");
-      const src = img.currentSrc || img.src || "";
+      const src = img.currentSrc || img.src || img.dataset.lazySrc || "";
       const alt = img.alt || "";
       const title = img.title || "";
       if (textMatches(alt) || textMatches(title) || textMatches(src)) {
@@ -102,59 +139,61 @@
     });
   }
 
-  // สแกนข้อความล้วน ๆ ในบล็อกเล็ก ๆ (เช่น หัวข้อโฆษณา, ป้ายข้อความ) แบบระวังไม่ให้ไปโดนเนื้อหาข่าว/บทความจริง
   function scanTextBlocks(root) {
     const candidates = root.querySelectorAll(
-      "div:not([data-gab-checked]), span:not([data-gab-checked]), p:not([data-gab-checked])"
+      "div:not([data-gab-checked]), span:not([data-gab-checked]), p:not([data-gab-checked])",
     );
     candidates.forEach((el) => {
       el.setAttribute("data-gab-checked", "1");
-      // เอาเฉพาะ element ที่ "ใบไม้" จริง ๆ (ไม่มีลูกเป็น element ใหญ่ ๆ) เพื่อลด false positive
       if (el.children.length > 2) return;
       const text = el.textContent || "";
-      if (text.length > 200) return; // ยาวเกินไป น่าจะเป็นเนื้อหาบทความ ไม่ใช่ ad copy
+      if (text.length > 200) return;
       if (textMatches(text)) {
         hideElement(findAdContainer(el));
       }
     });
   }
 
-  // ---------- Cluster detection ----------
-  // เว็บพนันมักฝัง banner หลายอันเรียงกันเป็นชุดในโครงสร้างเดียวกัน เช่น
-  // <a rel="nofollow noopener" target="_blank"><img></a> ซ้ำ ๆ กันในกล่องเดียว
-  // ซึ่งบางอันอาจไม่มีคำ keyword โผล่เลย (ใช้ short link + ชื่อไฟล์รูปทั่วไป)
-  // ถ้าในกลุ่มเดียวกันมีอันใดอันหนึ่งที่ยืนยันแล้วว่าเป็นพนัน (จาก keyword)
-  // ให้ถือว่าทั้งกลุ่มเป็นชุดโฆษณาเดียวกัน แล้วซ่อนทั้งหมด
-  function isBannerShapeLink(a) {
-    if (!a || a.tagName !== "A") return false;
-    const rel = (a.getAttribute("rel") || "").toLowerCase();
-    const target = a.getAttribute("target");
-    const imgs = a.querySelectorAll("img");
-    if (imgs.length !== 1) return false;
-    const text = (a.textContent || "").trim();
-    if (text.length > 0) return false; // ลิงก์ต้องมีแค่รูป ไม่มีข้อความอื่น
-    if (!rel.includes("nofollow")) return false;
-    if (target !== "_blank") return false;
-    return true;
-  }
-
   function scanBannerClusters() {
-    // เช็คทั้งเอกสารเสมอ เพราะสมาชิกในกลุ่มอาจถูกเพิ่มเข้ามาคนละรอบกัน
-    const links = document.querySelectorAll('a[target="_blank"][rel]');
-    const parents = new Set();
+    const seen = new Set();
+    const links = document.querySelectorAll(
+      'a[target="_blank"][rel*="nofollow"]',
+    );
+
     links.forEach((a) => {
-      if (isBannerShapeLink(a) && a.parentElement) {
-        parents.add(a.parentElement);
+      if (a.dataset.gabMapped === "1") return;
+
+      let node = a.parentElement;
+      let depth = 0;
+      let container = null;
+      while (node && depth < 5) {
+        const group = node.querySelectorAll(
+          'a[target="_blank"][rel*="nofollow"]',
+        );
+        if (group.length >= 2) {
+          container = node;
+          break;
+        }
+        node = node.parentElement;
+        depth++;
       }
-    });
-    parents.forEach((parent) => {
-      const siblings = Array.from(parent.children).filter(
-        (c) => c.tagName === "A" && isBannerShapeLink(c)
+
+      if (!container || seen.has(container)) return;
+      seen.add(container);
+
+      const group = container.querySelectorAll(
+        'a[target="_blank"][rel*="nofollow"]',
       );
-      if (siblings.length < 2) return; // ต้องมีอย่างน้อย 2 อันถึงจะถือว่าเป็น "ชุด"
-      const anyConfirmed = siblings.some((c) => c.dataset.gabHidden === "1");
+      if (group.length < 2) return;
+
+      const anyConfirmed = Array.from(group).some(
+        (c) => c.dataset.gabHidden === "1",
+      );
       if (anyConfirmed) {
-        siblings.forEach((c) => hideElement(c));
+        group.forEach((c) => {
+          c.dataset.gabMapped = "1";
+          hideElement(c);
+        });
       }
     });
   }
@@ -167,9 +206,66 @@
       scanIframes(root);
       scanTextBlocks(root);
       scanBannerClusters();
+      removeAdWrappers();
     } catch (e) {
-      // เงียบไว้ ไม่ให้ error ไปกวนหน้าเว็บอื่น
       console.debug("[GamblingAdBlocker] scan error", e);
+    }
+  }
+
+  function removeAdWrappers() {
+    const hiddenAs = document.querySelectorAll(
+      'a[data-gab-hidden="1"][target="_blank"][rel*="nofollow"]',
+    );
+    const seen = new Set();
+    hiddenAs.forEach((a) => {
+      let outerWrapper = null;
+      let node = a.parentElement;
+      let depth = 0;
+      while (node && depth < 8) {
+        const cls = (node.className || "").toLowerCase();
+        const tag = node.tagName.toLowerCase();
+        const id = (node.id || "").toLowerCase();
+        const isAd =
+          (tag === "aside" && /\bad\b/.test(cls)) ||
+          /\b(adt|adrg|adlf|adcen|adrow)\b/.test(cls) ||
+          id.includes("ad");
+        if (isAd) outerWrapper = node;
+        node = node.parentElement;
+        depth++;
+      }
+      if (outerWrapper && !seen.has(outerWrapper)) {
+        const bannerLinks = outerWrapper.querySelectorAll(
+          'a[target="_blank"][rel*="nofollow"]',
+        );
+        const visibleBanners = Array.from(bannerLinks).filter(
+          (l) => !l.dataset.gabHidden,
+        );
+        if (visibleBanners.length === 0) {
+          seen.add(outerWrapper);
+          outerWrapper.remove();
+        }
+      }
+    });
+    if (seen.size === 0) {
+      const allMapped = document.querySelectorAll('a[data-gab-mapped="1"]');
+      const parents = new Set();
+      allMapped.forEach((a) => {
+        let p = a.parentElement;
+        if (p && p.parentElement) parents.add(p.parentElement);
+      });
+      parents.forEach((parent) => {
+        const bannerLinks = parent.querySelectorAll(
+          'a[target="_blank"][rel*="nofollow"]',
+        );
+        if (bannerLinks.length < 2) return;
+        const visible = Array.from(bannerLinks).filter(
+          (l) => !l.dataset.gabHidden,
+        );
+        if (visible.length === 0 && !seen.has(parent)) {
+          seen.add(parent);
+          parent.remove();
+        }
+      });
     }
   }
 
@@ -177,15 +273,12 @@
     try {
       chrome.runtime?.id &&
         chrome.storage?.local.set({ gabBlockedCount: blockedCount });
-    } catch (e) {
-      /* extension context อาจถูก invalidate ระหว่างรีโหลด ก็แค่ข้าม */
-    }
+    } catch (e) {}
   }
 
-  // ---------- เริ่มทำงาน ----------
   function init() {
     chrome.storage?.local.get(["gabEnabled"], (res) => {
-      enabled = res.gabEnabled !== false; // default = true
+      enabled = res.gabEnabled !== false;
       if (enabled) runScan(document);
     });
   }
@@ -196,7 +289,6 @@
     init();
   }
 
-  // เฝ้าดู DOM ที่โหลดเพิ่มทีหลัง (โฆษณาแบบ lazy-load / infinite scroll)
   const observer = new MutationObserver((mutations) => {
     if (!enabled) return;
     for (const m of mutations) {
@@ -207,9 +299,11 @@
       });
     }
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 
-  // ฟังคำสั่งเปิด/ปิดจาก popup
   chrome.runtime?.onMessage?.addListener((msg) => {
     if (msg?.type === "GAB_TOGGLE") {
       enabled = msg.enabled;

@@ -226,6 +226,7 @@
         const tag = node.tagName.toLowerCase();
         const id = (node.id || "").toLowerCase();
         const isAd =
+          tag === "center" ||
           (tag === "aside" && /\bad\b/.test(cls)) ||
           /\b(adt|adrg|adlf|adcen|adrow)\b/.test(cls) ||
           id.includes("ad");
@@ -233,37 +234,77 @@
         node = node.parentElement;
         depth++;
       }
-      if (outerWrapper && !seen.has(outerWrapper)) {
-        const bannerLinks = outerWrapper.querySelectorAll(
-          'a[target="_blank"][rel*="nofollow"]',
-        );
-        const visibleBanners = Array.from(bannerLinks).filter(
-          (l) => !l.dataset.gabHidden,
-        );
-        if (visibleBanners.length === 0) {
-          seen.add(outerWrapper);
-          outerWrapper.remove();
+        if (outerWrapper && !seen.has(outerWrapper)) {
+          const bannerLinks = outerWrapper.querySelectorAll(
+            'a[target="_blank"][rel*="nofollow"]',
+          );
+          const visibleBanners = Array.from(bannerLinks).filter(
+            (l) => !l.dataset.gabHidden,
+          );
+          if (visibleBanners.length === 0) {
+            const cls = (outerWrapper.className || "").toLowerCase();
+            const tag = outerWrapper.tagName.toLowerCase();
+            const id = (outerWrapper.id || "").toLowerCase();
+            if (
+              /\b(page-content|site-content|s-container|entry-content|post-content)\b/.test(cls) ||
+              /\b(content|main|wrapper)\b/.test(id) ||
+              tag === "main" || tag === "article" || tag === "section"
+            ) {
+              console.log("[GAB] Skipping protected container:", tag, cls, id);
+              return;
+            }
+            console.log("[GAB] Pass 1 removing:", tag, cls, id);
+            seen.add(outerWrapper);
+            outerWrapper.remove();
+          }
         }
-      }
     });
     if (seen.size === 0) {
       const allMapped = document.querySelectorAll('a[data-gab-mapped="1"]');
-      const parents = new Set();
+      const containers = new Map();
       allMapped.forEach((a) => {
-        let p = a.parentElement;
-        if (p && p.parentElement) parents.add(p.parentElement);
+        let node = a.parentElement;
+        let depth = 0;
+        let adContainer = null;
+        while (node && depth < 6) {
+          const bannerLinks = node.querySelectorAll(
+            'a[target="_blank"][rel*="nofollow"]',
+          );
+          if (bannerLinks.length >= 2) {
+            const hasContent =
+              node.querySelectorAll(
+                "h1, h2, h3, h4, h5, h6, p, video, article, section, main, iframe",
+              ).length > 0;
+            if (!hasContent) adContainer = node;
+            else break;
+          }
+          node = node.parentElement;
+          depth++;
+        }
+        if (adContainer) containers.set(adContainer, true);
       });
-      parents.forEach((parent) => {
-        const bannerLinks = parent.querySelectorAll(
+      containers.forEach((_, container) => {
+        const bannerLinks = container.querySelectorAll(
           'a[target="_blank"][rel*="nofollow"]',
         );
-        if (bannerLinks.length < 2) return;
         const visible = Array.from(bannerLinks).filter(
           (l) => !l.dataset.gabHidden,
         );
-        if (visible.length === 0 && !seen.has(parent)) {
-          seen.add(parent);
-          parent.remove();
+        if (visible.length === 0 && !seen.has(container)) {
+          const cls = (container.className || "").toLowerCase();
+          const tag = container.tagName.toLowerCase();
+          const id = (container.id || "").toLowerCase();
+          if (
+            /\b(page-content|site-content|s-container|entry-content|post-content)\b/.test(cls) ||
+            /\b(content|main|wrapper)\b/.test(id) ||
+            tag === "main" || tag === "article" || tag === "section"
+          ) {
+            console.log("[GAB] Skipping protected container:", tag, cls, id);
+            return;
+          }
+          console.log("[GAB] Fallback removing:", tag, cls, id);
+          seen.add(container);
+          container.remove();
         }
       });
     }
